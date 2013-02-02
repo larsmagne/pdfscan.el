@@ -23,16 +23,22 @@
 (defun pdfscan (name)
   "Scan several pages into NAME."
   (interactive "sName: ")
-  (let ((default-directory pdfscan-directory))
+  (unless (file-exists-p pdfscan-directory)
+    (make-directory pdfscan-directory t))
+  (let ((default-directory pdfscan-directory)
+	(format "%s.%02d.tiff"))
+    (when (file-exists-p (format format name 1))
+      (error "%s already exists" name))
     (let ((ended nil)
 	  (part 1))
       (while (not ended)
-	(pdfscan-image (format "%s.%d.tiff" name part))
+	(pdfscan-image (format format name part))
 	(incf part)
 	(setq ended (y-or-n-p "Finished document? ")))
       (pdfscan-make-pdf name))))
 
 (defun pdfscan-image (file-name)
+  (message "Scanning %s..." file-name)
   (call-process "scanimage" nil
 		`((:file ,file-name) nil)
 		nil
@@ -40,15 +46,17 @@
 		"-d" "epson"
 		"--format=tiff"
 		"--resolution" "300dpi")
-  (start-process "*gimp*" nil "gimp" file-name))
+  (message "Scanning %s...done" file-name)
+  (start-process "*gimp*" nil "gimp"
+		 (expand-file-name file-name pdfscan-directory)))
 
 (defun pdfscan-make-pdf (name)
   (let ((images (directory-files
 		 "." nil
 		 (format "%s.[0-9]+.tiff" (regexp-quote name)))))
-    (call-process "convert" nil nil nil
-		  (append images
-			  (list (format "%s.pdf" name))))))
+    (apply 'call-process "convert" nil (get-buffer-create "*pdf*") nil
+	   (append images
+		   (list (format "%s.pdf" name))))))
 
 (provide 'pdfscan)
 
