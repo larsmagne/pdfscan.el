@@ -56,7 +56,7 @@
 		 (format "%s.[0-9]+.tiff" (regexp-quote name))))
 	jpegs)
     (dolist (image images)
-      (let ((jpeg (replace-regexp-in-string ".tiff$" ".jpg")))
+      (let ((jpeg (replace-regexp-in-string ".tiff$" ".jpg" image)))
 	(call-process "convert" nil nil nil image jpeg)
 	(push jpeg jpegs)))
     (setq jpegs (nreverse jpegs))
