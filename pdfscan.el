@@ -53,9 +53,15 @@
 (defun pdfscan-make-pdf (name)
   (let ((images (directory-files
 		 "." nil
-		 (format "%s.[0-9]+.tiff" (regexp-quote name)))))
+		 (format "%s.[0-9]+.tiff" (regexp-quote name))))
+	jpegs)
+    (dolist (image images)
+      (let ((jpeg (replace-regexp-in-string ".tiff$" ".jpg")))
+	(call-process "convert" nil nil nil image jpeg)
+	(push jpeg jpegs)))
+    (setq jpegs (nreverse jpegs))
     (apply 'call-process "convert" nil (get-buffer-create "*pdf*") nil
-	   (append images
+	   (append jpegs
 		   (list (format "%s.pdf" name))))))
 
 (provide 'pdfscan)
