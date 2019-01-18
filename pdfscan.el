@@ -37,18 +37,26 @@
 	(setq ended (y-or-n-p "Finished document? ")))
       (pdfscan-make-pdf name))))
 
-(defun pdfscan-image (file-name)
-  (message "Scanning %s..." file-name)
-  (call-process "scanimage" nil
-		`((:file ,file-name) nil)
-		nil
-		"--mode=color"
-		"-d" "epson"
-		"--format=tiff"
-		"--resolution" "300dpi")
-  (message "Scanning %s...done" file-name)
-  (start-process "*gimp*" nil "gimp"
-		 (expand-file-name file-name pdfscan-directory)))
+(defun pdfscan-image (file)
+  (message "Scanning %s..." file)
+  (let ((device (magscan-find-device)))
+    (call-process "/usr/slocal/bin/scanimage"
+		  nil (list :file
+			    (expand-file-name file pdfscan-directory))
+		  nil
+		  "-d" (format "epsonds:libusb:%s:%s" (car device)
+			       (cdr device))
+		  "--resolution" "300dpi"
+		  "--format=tiff")
+    (start-process "reset" nil
+		   "~/src/usbreset/usbreset"
+		   (format "/dev/bus/usb/%s/%s"
+			   (car device) (cdr device)))))
+
+(defun pdfscan-find-device ()
+  (let ((bits (split-string (file-truename "/dev/epson") "/")))
+    (cons (car (last bits 2))
+	  (car (last bits 1)))))
 
 (defun pdfscan-make-pdf (name)
   (let ((images (directory-files
