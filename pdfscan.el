@@ -47,6 +47,8 @@
 		  "-d" (format "epsonds:libusb:%s:%s" (car device)
 			       (cdr device))
 		  "--resolution" "300dpi"
+		  ;; A4
+		  "-l" "0" "-t" "0" "-x" "215" "-y" "297"
 		  "--format=tiff")
     (start-process "reset" nil
 		   "~/src/usbreset/usbreset"
