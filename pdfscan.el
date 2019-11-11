@@ -39,16 +39,17 @@
 
 (defun pdfscan-image (file)
   (message "Scanning %s..." file)
-  (let ((device (magscan-find-device)))
+  (let ((device (pdfscan-find-device)))
     (call-process "/usr/slocal/bin/scanimage"
 		  nil (list :file
 			    (expand-file-name file pdfscan-directory))
 		  nil
 		  "-d" (format "epsonds:libusb:%s:%s" (car device)
 			       (cdr device))
-		  "--resolution" "300dpi"
+		  "--resolution" "100dpi"
 		  ;; A4
-		  "-l" "0" "-t" "0" "-x" "215" "-y" "297"
+		  "--mode" "Gray"
+		  "-l" "0" "-t" "0" "-x" "210" "-y" "297"
 		  "--format=tiff")
     (start-process "reset" nil
 		   "~/src/usbreset/usbreset"
@@ -73,6 +74,11 @@
     (apply 'call-process "convert" nil (get-buffer-create "*pdf*") nil
 	   (append jpegs
 		   (list (format "%s.pdf" name))))))
+
+(defun pdfscan-find-device ()
+  (let ((bits (split-string (file-truename "/dev/epson") "/")))
+    (cons (car (last bits 2))
+	  (car (last bits 1)))))
 
 (provide 'pdfscan)
 
